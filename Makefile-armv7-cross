@@ -1,0 +1,52 @@
+# Copyright 2016, akashche at redhat.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+OJDKBUILD_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+OJDKBUILD_MILESTONE=ojdkbuild
+OJDKBUILD_UPDATE=102
+OJDKBUILD_BUILD=14
+OJDKBUILD_RELEASE=1
+OJDKBUILD_IMAGE=java-1.8.0-openjdk-aarch32-1.8.0.$(OJDKBUILD_UPDATE)-$(OJDKBUILD_RELEASE).b$(OJDKBUILD_BUILD).$(OJDKBUILD_MILESTONE).xenial.armv7
+
+all:
+	rm -rf $(OJDKBUILD_DIR)/build
+	rm -rf build
+	mkdir $(OJDKBUILD_DIR)/build
+	bash ./configure \
+		--openjdk-target=arm-linux-gnueabihf \
+		--enable-unlimited-crypto=yes \
+		--disable-debug-symbols \
+		--with-jvm-variants=client \
+		--with-debug-level=release \
+		--with-boot-jdk=/usr/lib/jvm/java-1.7.0-openjdk-amd64 \
+		--with-cacerts-file=$(OJDKBUILD_DIR)/lookaside/ca-certificates/cacerts \
+		--with-milestone=$(OJDKBUILD_RELEASE)-$(OJDKBUILD_MILESTONE) \
+		--with-update-version=$(OJDKBUILD_UPDATE) \
+		--with-build-number=$(OJDKBUILD_BUILD)
+	make images LOG=info 2>&1 | tee make.log
+	cp -a ./build/linux-aarch32-normal-client-release/images/j2sdk-image \
+		$(OJDKBUILD_DIR)/build/$(OJDKBUILD_IMAGE)
+	rm -rf $(OJDKBUILD_DIR)/build/$(OJDKBUILD_IMAGE)/demo
+	rm -rf $(OJDKBUILD_DIR)/build/$(OJDKBUILD_IMAGE)/sample
+	cp -a $(OJDKBUILD_DIR)/lookaside/dejavu-fonts/ttf \
+		$(OJDKBUILD_DIR)/build/$(OJDKBUILD_IMAGE)/jre/lib/fonts
+	cp $(OJDKBUILD_DIR)/lookaside/dejavu-fonts/LICENSE \
+		$(OJDKBUILD_DIR)/build/$(OJDKBUILD_IMAGE)/jre/lib/fonts/
+	cp $(OJDKBUILD_DIR)/lookaside/dejavu-fonts/AUTHORS \
+		$(OJDKBUILD_DIR)/build/$(OJDKBUILD_IMAGE)/jre/lib/fonts/
+	cp $(OJDKBUILD_DIR)/lookaside/dejavu-fonts/README \
+		$(OJDKBUILD_DIR)/build/$(OJDKBUILD_IMAGE)/jre/lib/fonts/
+	cd $(OJDKBUILD_DIR)/build && zip -qyr9 $(OJDKBUILD_IMAGE).zip $(OJDKBUILD_IMAGE)
+	cd $(OJDKBUILD_DIR)/build && sha256sum $(OJDKBUILD_IMAGE).zip > $(OJDKBUILD_IMAGE).zip.sha256
+	

@@ -1,0 +1,6 @@
+[submodule "lookaside/ca-certificates"]
+	path = lookaside/ca-certificates
+	url = https://github.com/ojdkbuild/lookaside_ca-certificates.git
+[submodule "lookaside/dejavu-fonts"]
+	path = lookaside/dejavu-fonts
+	url = https://github.com/ojdkbuild/lookaside_dejavu-fonts.git
